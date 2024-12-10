@@ -1,10 +1,11 @@
 module Lib
-    ( 
-        
+    ( parseExpression
+    , readByLines
     ) where
 
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import Control.Applicative 
 import Data.Char (isDigit, digitToInt)
 
@@ -31,6 +32,14 @@ instance Applicative Parser where
                     Nothing -> Nothing
                     Just (zs, x) -> Just (zs, g x)
 
+instance Alternative Parser where
+    empty = Parser $ const Nothing
+
+    (Parser p1) <|> (Parser p2) = Parser f
+        where
+            f xs = case p1 xs of
+                Nothing -> p2 xs
+                result -> result
 
 -- Парсит символ, если он соответствует предикату
 satisfy :: (Char -> Bool) -> Parser Char
@@ -82,3 +91,31 @@ expression =
                                       <*> spaces
                                       <*> integer
 
+-- Применяет операцию
+applyOperation :: Char -> Int -> Int -> Int
+applyOperation '+' = (+)
+applyOperation '-' = (-)
+applyOperation '*' = (*)
+applyOperation '/' = div
+applyOperation _ = error "Unknown operation"
+
+
+-- Форматирует результат
+formatExpression :: (Int, Char, Int) -> Text
+formatExpression (n1, op, n2) = 
+    T.pack (show n1) <> T.pack [op] <> T.pack (show n2) <> T.pack " = " <> T.pack (show result)
+    where
+        result = applyOperation op n1 n2
+
+-- Парсинг и вывод результата
+parseExpression :: Text -> IO ()
+parseExpression input =
+    case runParser expression input of
+        Just (_, parsedExpr) -> TIO.putStrLn (formatExpression parsedExpr)
+        Nothing -> putStrLn "Error"
+
+-- Чтение строк из файла
+readByLines :: FilePath -> IO [Text]
+readByLines filePath = do
+    content <- TIO.readFile filePath  -- читаем весь файл как Text
+    return (T.lines content)          -- разбиваем текст на строки
