@@ -54,15 +54,16 @@ digit = digitToInt <$> satisfy isDigit
 
 -- Парсит последовательность цифр и преобразует её в Int
 integer :: Parser Int
-integer = (negate <$> (satisfy (== '-') *> integer)) <|> positiveInteger
+integer = (negate <$> (satisfy (== '-') *> positiveInteger))
+      <|> (satisfy (== '+') *> positiveInteger)
+      <|> positiveInteger
   where
-    positiveInteger = Parser f
-        where
-            f xs =
-                let (digits, cs) = T.span isDigit xs
-                in if T.null digits
-                    then Nothing
-                    else Just (cs, T.foldl' (\acc c -> acc * 10 + digitToInt c) 0 digits)
+    positiveInteger = Parser f where
+        f xs =
+            let (digits, cs) = T.span isDigit xs
+            in if T.null digits
+                then Nothing
+                else Just (cs, T.foldl' (\acc c -> acc * 10 + digitToInt c) 0 digits)
 
 -- Парсит пробел
 space :: Parser Char
