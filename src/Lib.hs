@@ -17,6 +17,19 @@ instance Functor Parser where
             Nothing -> Nothing -- Nothing, если парсер p возвращает Nothing
             Just (cs, c) -> Just (cs, func c) -- (остаток, c обработанный функцией func), если p возвращает (остаток, c)
 
+instance Applicative Parser where
+    pure x = Parser f
+        where
+            f xs = Just (xs, x)
+
+    (Parser pf) <*> (Parser px) = Parser f
+        where
+            f xs = case pf xs of
+                Nothing -> Nothing
+                Just (ys, g) -> case px ys of
+                    Nothing -> Nothing
+                    Just (zs, x) -> Just (zs, g x)
+
 -- Парсит символ, если он соответствует предикату
 satisfy :: (Char -> Bool) -> Parser Char
 satisfy predicate = Parser f where
@@ -54,3 +67,13 @@ spaces = Parser f
 -- Парсер для оператора
 operation :: Parser Char
 operation = satisfy (`elem` "+-*/")
+
+-- Основной парсер выражений с использованием Applicative
+expression :: Parser (Int, Char, Int)
+expression =
+    (\_ n1 _ op _ n2 -> (n1, op, n2)) <$> spaces
+                                      <*> integer
+                                      <*> spaces
+                                      <*> operation
+                                      <*> spaces
+                                      <*> integer
