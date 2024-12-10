@@ -1,10 +1,11 @@
 module Lib
     ( 
+        
     ) where
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import Control.Applicative ( (<$>), some)
+import Control.Applicative 
 import Data.Char (isDigit, digitToInt)
 
 newtype Parser a = Parser { runParser :: Text -> Maybe (Text, a) }
@@ -30,6 +31,7 @@ instance Applicative Parser where
                     Nothing -> Nothing
                     Just (zs, x) -> Just (zs, g x)
 
+
 -- Парсит символ, если он соответствует предикату
 satisfy :: (Char -> Bool) -> Parser Char
 satisfy predicate = Parser f where
@@ -43,13 +45,15 @@ digit = digitToInt <$> satisfy isDigit
 
 -- Парсит последовательность цифр и преобразует её в Int
 integer :: Parser Int
-integer = Parser f
-    where
-        f xs =
-            let (digits, cs) = T.span isDigit xs
-            in if T.null digits
-                then Nothing
-                else Just (cs, T.foldl' (\acc c -> acc * 10 + digitToInt c) 0 digits)
+integer = (negate <$> (satisfy (== '-') *> integer)) <|> positiveInteger
+  where
+    positiveInteger = Parser f
+        where
+            f xs =
+                let (digits, cs) = T.span isDigit xs
+                in if T.null digits
+                    then Nothing
+                    else Just (cs, T.foldl' (\acc c -> acc * 10 + digitToInt c) 0 digits)
 
 -- Парсит пробел
 space :: Parser Char
@@ -77,3 +81,4 @@ expression =
                                       <*> operation
                                       <*> spaces
                                       <*> integer
+
