@@ -1,6 +1,8 @@
-module Main (main) where
+module Main where
 
-import Lib
+import Lib ()
+import System.Environment (getArgs)
 
 main :: IO ()
-main = someFunc
+main = do
+     putStrLn("hh")

@@ -35,6 +35,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , parsec
   default-language: Haskell2010
 
 executable my-parser-exe
@@ -49,6 +50,7 @@ executable my-parser-exe
   build-depends:
       base >=4.7 && <5
     , my-parser
+    , parsec
   default-language: Haskell2010
 
 test-suite my-parser-test
@@ -64,4 +66,5 @@ test-suite my-parser-test
   build-depends:
       base >=4.7 && <5
     , my-parser
+    , parsec
   default-language: Haskell2010
