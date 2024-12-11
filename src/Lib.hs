@@ -93,27 +93,32 @@ expression =
                                       <*> integer
 
 -- Применяет операцию
-applyOperation :: Char -> Int -> Int -> Int
-applyOperation '+' = (+)
-applyOperation '-' = (-)
-applyOperation '*' = (*)
-applyOperation '/' = div
-applyOperation _ = error "Unknown operation"
+applyOperation :: Char -> Int -> Int -> Either Text Int
+applyOperation '/' _ 0 = Left $ T.pack"Error: Division by zero"
+applyOperation '+' n1 n2 = Right (n1 + n2)
+applyOperation '-' n1 n2 = Right (n1 - n2)
+applyOperation '*' n1 n2 = Right (n1 * n2)
+applyOperation '/' n1 n2 = Right (n1 `div` n2)
 
 
 -- Форматирует результат
-formatExpression :: (Int, Char, Int) -> Text
+formatExpression :: (Int, Char, Int) -> Either Text Text
 formatExpression (n1, op, n2) = 
-    T.pack (show n1) <> T.pack [op] <> T.pack (show n2) <> T.pack " = " <> T.pack (show result)
-    where
-        result = applyOperation op n1 n2
+    case applyOperation op n1 n2 of
+        Right result -> 
+            Right $ T.pack (show n1) <> T.pack [op] <> T.pack (show n2) <> T.pack " = " <> T.pack (show result)
+        Left err -> 
+            Left err
 
 -- Парсинг и вывод результата
 parseExpression :: Text -> IO ()
 parseExpression input =
     case runParser expression input of
-        Just (_, parsedExpr) -> TIO.putStrLn (formatExpression parsedExpr)
-        Nothing -> putStrLn "Error"
+        Just (_, parsedExpr) -> 
+            case formatExpression parsedExpr of
+                Right result -> TIO.putStrLn result
+                Left err -> TIO.putStrLn err
+        Nothing -> TIO.putStrLn$  T.pack "Error: Invalid input"
 
 -- Чтение строк из файла
 readByLines :: FilePath -> IO [Text]
